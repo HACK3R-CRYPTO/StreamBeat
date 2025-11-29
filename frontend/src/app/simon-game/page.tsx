@@ -12,7 +12,7 @@ import { defineChain, getContract } from "thirdweb";
 import { readContract } from "thirdweb";
 import { ConnectButton } from "thirdweb/react";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3002';
 const GEM_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_GEM_CONTRACT_ADDRESS || "0x699C19321188aB200194E8A2B6db19B43106E70F";
 
 const chain = defineChain({

@@ -2,9 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const { ethers } = require('ethers');
 require('dotenv').config();
+const { emitScoreSubmitted } = require('./sds-emitter');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 
 // Middleware
 app.use(cors());
@@ -15,10 +16,15 @@ const REWARDS_ADDRESS = process.env.REWARDS_ADDRESS || process.env.REWARDS_CONTR
 const RPC_URL = process.env.RPC_URL || process.env.SOMNIA_RPC || 'https://dream-rpc.somnia.network';
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
-// Initialize provider and wallet
+// Initialize provider and wallet with Somnia Testnet network config
 let provider, wallet;
 if (PRIVATE_KEY && RPC_URL) {
-    provider = new ethers.JsonRpcProvider(RPC_URL);
+    // Somnia Testnet chain ID: 50312
+    // Pass network config directly - ethers will use it
+    provider = new ethers.JsonRpcProvider(RPC_URL, {
+        chainId: 50312,
+        name: 'Somnia Shannon Testnet'
+    });
     wallet = new ethers.Wallet(PRIVATE_KEY, provider);
 }
 
@@ -92,6 +98,20 @@ app.post('/api/submit-score', async (req, res) => {
                 console.log(`   Transaction: ${tx.hash}`);
                 console.log(`   Block: ${receipt.blockNumber}`);
                 console.log(`   Gas used: ${receipt.gasUsed.toString()}`);
+                
+                // Emit SDS event for real-time subscriptions
+                const timestamp = Math.floor(Date.now() / 1000);
+                if (PRIVATE_KEY && RPC_URL) {
+                    emitScoreSubmitted(playerAddress, verifiedScore, timestamp, PRIVATE_KEY, RPC_URL)
+                        .then(sdsTxHash => {
+                            if (sdsTxHash) {
+                                console.log(`📡 SDS event emitted: ${sdsTxHash}`);
+                            }
+                        })
+                        .catch(err => {
+                            console.error('SDS emission error (non-blocking):', err.message);
+                        });
+                }
                 
                 return res.json({
                     success: true,
@@ -183,6 +203,7 @@ app.get('/health', (req, res) => {
 // Start server
 app.listen(PORT, () => {
     console.log(`🎵 StreamBeat Backend running on http://localhost:${PORT}`);
+    console.log(`📡 SDS event emission enabled`);
     console.log(`⛓️ Somnia RPC: ${RPC_URL}`);
     console.log(`📝 Rewards Contract: ${REWARDS_ADDRESS || 'PENDING_DEPLOYMENT'}`);
     console.log(`🔒 Anti-Cheat: ENABLED (Score calculation validation)`);

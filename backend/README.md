@@ -37,7 +37,7 @@ RPC_URL=https://dream-rpc.somnia.network
 PRIVATE_KEY=0xyour_private_key_with_0x_prefix
 
 # Server Configuration
-PORT=3001
+PORT=3002
 ```
 
 Important notes:
@@ -171,11 +171,62 @@ forge script script/SetBackendValidator.s.sol:SetBackendValidatorScript \
 
 This allows backend wallet to submit scores.
 
+## Somnia Data Streams Integration
+
+Backend emits events through SDS when scores are submitted. This enables real-time leaderboard updates in the frontend.
+
+### Implementation
+
+When a score is successfully submitted to the contract:
+1. Backend calls `emitScoreSubmitted()` from `sds-emitter.js`
+2. SDS module uses `setAndEmitEvents()` to publish data and emit event
+3. Event ID `ScoreSubmitted` is emitted with player address and score
+4. Frontend subscriptions receive the event in real-time
+
+### Files
+
+- `sds-emitter.js`: Handles SDS event emission
+  - Registers score data schema automatically
+  - Registers event schemas automatically when emitting events
+  - Emits `ScoreSubmitted` events via `setAndEmitEvents()`
+  - Non-blocking - failures don't break score submission
+
+- `register-event-schema.js`: Optional manual event schema registration script
+  - Registers `ScoreSubmitted` event schema on-chain
+  - Run once if you want to register schemas manually
+  - **Note:** This is optional - `sds-emitter.js` handles registration automatically
+  - **Status:** Event schema successfully registered (tx: `0x7c7ce28a019d463a79d655eaeea8ab4ef222a49f13a210e0385f06f8082147cf`)
+
+### Event Schema Registration (Optional)
+
+Event schema registration is **automatic** when the backend emits events via `setAndEmitEvents()`. The `sds-emitter.js` module registers both data schemas and event schemas automatically.
+
+However, if you want to register event schemas manually (for discoverability or testing), you can use:
+
+```bash
+# From backend directory
+node register-event-schema.js
+```
+
+**Requirements:**
+- `PRIVATE_KEY` in `.env` file
+- Wallet with SOMNI for gas fees
+
+**Note:** This step is **not required**. The backend handles event schema registration automatically when emitting events.
+
+### Dependencies
+
+Backend requires `@somnia-chain/streams` and `viem` for SDS integration:
+```bash
+npm install @somnia-chain/streams viem
+```
+
 ## Project Structure
 
 ```
 backend/
-├── server.js
+├── server.js           # Main Express server
+├── sds-emitter.js      # SDS event emission module
 ├── package.json
 ├── README.md
 ├── ANTI_CHEAT.md

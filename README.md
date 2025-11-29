@@ -34,7 +34,7 @@ Simon Memory Game: Watch button sequences flash brightly. Repeat patterns correc
 
 Leaderboard updates instantly. No refresh needed. Scores appear as they happen. Prize pool updates live. Your rank changes in real time. See new players join. See scores update. See positions shift. All without page refresh.
 
-Powered by Somnia Data Streams. On-chain events stream directly to your browser. Fast updates without polling. Low latency. High performance. Database-like speed with blockchain security.
+Powered by Somnia Data Streams. Backend emits events via `setAndEmitEvents()` when scores are submitted. Frontend subscribes using `somniaStreamsEventId` for real-time updates. On-chain events stream directly to your browser. Fast updates without polling. Low latency. High performance. Database-like speed with blockchain security.
 
 ## Anti-Cheat System
 

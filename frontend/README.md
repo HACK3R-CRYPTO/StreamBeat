@@ -34,11 +34,12 @@ NEXT_PUBLIC_GEM_CONTRACT_ADDRESS=0x699C19321188aB200194E8A2B6db19B43106E70F
 NEXT_PUBLIC_REWARDS_CONTRACT_ADDRESS=0xC947EF14370F74ccE4d325ee4D83d9B4f3639da7
 
 # Backend API
-NEXT_PUBLIC_BACKEND_URL=http://localhost:3001
+NEXT_PUBLIC_BACKEND_URL=http://localhost:3002
 
 # Network Configuration
 NEXT_PUBLIC_CHAIN_ID=50312
 NEXT_PUBLIC_RPC_URL=https://dream-rpc.somnia.network
+NEXT_PUBLIC_WS_URL=wss://dream-rpc.somnia.network/ws
 ```
 
 **Note:** Contract addresses are also hardcoded in source files as a fallback, so the app works even without `.env.local`.
@@ -81,7 +82,8 @@ frontend/
 │   │   ├── PrizePoolTracker.tsx
 │   │   └── Loading.tsx
 │   ├── lib/
-│   │   └── sds-client.ts
+│   │   ├── sds-client.ts      # Somnia Data Streams subscriptions
+│   │   └── sds-schemas.ts     # Event schema definitions
 │   ├── config/
 │   │   └── game.ts
 │   ├── context/
@@ -110,7 +112,7 @@ Update these in source files if contracts are redeployed.
 
 ## Somnia Data Streams Integration
 
-StreamBeat uses Somnia Data Streams for real-time updates. Leaderboard updates instantly. Score feed shows recent submissions. Prize pool updates live. No polling. No refresh needed.
+StreamBeat uses Somnia Data Streams for real-time updates. Backend emits events via `setAndEmitEvents()` when scores are submitted. Frontend subscribes using `somniaStreamsEventId` for instant updates. Leaderboard updates instantly. Score feed shows recent submissions. Prize pool updates live. No polling. No refresh needed.
 
 ### Features
 
@@ -125,11 +127,31 @@ Position tracking shows your rank changes.
 ### Implementation
 
 SDS client (`src/lib/sds-client.ts`):
-- Subscribes to ScoreSubmitted events from rewards contract
+- Uses WebSocket transport (`wss://dream-rpc.somnia.network/ws`) for real-time subscriptions
+- Subscribes to ScoreSubmitted events using `somniaStreamsEventId`
 - Subscribes to RewardsDistributed events
 - Subscribes to PrizePoolUpdated events
 - Updates UI automatically when events occur
-- Uses eventContractSource for direct contract event streaming
+- Backend emits events via `setAndEmitEvents()` when scores are submitted
+- SDK requires WebSocket transport type for subscriptions to work
+- Frontend subscribes using only `somniaStreamsEventId` (no eventContractSource needed)
+
+### Event Schema Registration (Optional)
+
+Event schema registration is **optional** with our current implementation. The backend automatically registers event schemas when emitting events via `setAndEmitEvents()`. However, if you want to register schemas manually for discoverability, you can use the registration script:
+
+**Registration script** (`backend/register-event-schema.js`):
+```bash
+# From backend directory
+node register-event-schema.js
+```
+
+**Requirements:**
+- `PRIVATE_KEY` in `.env` file (root directory)
+- Wallet with SOMNI for gas fees
+- Script registers `ScoreSubmitted`, `PrizePoolUpdated`, and `RewardsDistributed` event schemas
+
+**Note:** This step is **not required** for SDS to work. The backend handles event schema registration automatically when emitting events.
 
 Leaderboard (`src/app/leaderboard/page.tsx`):
 - Uses subscribeToScores for real-time updates
@@ -249,11 +271,12 @@ NEXT_PUBLIC_GEM_CONTRACT_ADDRESS=0x699C19321188aB200194E8A2B6db19B43106E70F
 NEXT_PUBLIC_REWARDS_CONTRACT_ADDRESS=0xC947EF14370F74ccE4d325ee4D83d9B4f3639da7
 
 # Backend API
-NEXT_PUBLIC_BACKEND_URL=http://localhost:3001
+NEXT_PUBLIC_BACKEND_URL=http://localhost:3002
 
 # Network Configuration
 NEXT_PUBLIC_CHAIN_ID=50312
 NEXT_PUBLIC_RPC_URL=https://dream-rpc.somnia.network
+NEXT_PUBLIC_WS_URL=wss://dream-rpc.somnia.network/ws
 ```
 
 **Note:** Contract addresses are also hardcoded in the source files as a fallback, so the app works even without `.env.local`.
@@ -306,10 +329,11 @@ Leaderboard not updating:
 - Refresh page if connection lost
 
 SDS connection errors:
-- Check RPC URL is correct
-- Verify contract addresses match deployed contracts
-- Check browser console for WebSocket errors
-- SDS uses HTTP transport internally
+- Check WebSocket URL is correct: `wss://dream-rpc.somnia.network/ws`
+- Verify `NEXT_PUBLIC_WS_URL` is set in `.env.local`
+- Check browser console for WebSocket connection errors
+- Ensure WebSocket transport is configured (required by SDK)
+- SDS subscriptions require WebSocket transport for real-time updates
 
 ## Browser Support
 

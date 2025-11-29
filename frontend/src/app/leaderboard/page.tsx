@@ -200,7 +200,7 @@ export default function LeaderboardPage() {
         
         // Fallback to backend API
         try {
-          const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+          const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3002';
           console.log("Trying backend API:", BACKEND_URL);
           const response = await fetch(`${BACKEND_URL}/api/leaderboard`);
           const data = await response.json();

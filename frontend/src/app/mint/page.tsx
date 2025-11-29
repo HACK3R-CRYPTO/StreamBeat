@@ -335,6 +335,7 @@ export default function MintPage() {
       
       // CRITICAL: Check if swap contract actually exists
       try {
+        const provider = new ethers.JsonRpcProvider(chain.rpc);
         const swapCode = await provider.getCode(SWAP_CONTRACT_ADDRESS);
         console.log("Swap contract code length:", swapCode.length);
         if (swapCode === "0x" || swapCode.length <= 2) {

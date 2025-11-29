@@ -79,11 +79,10 @@ export function subscribeToScores(
     const topic0 = getEventTopic(SCORE_SUBMITTED_SIGNATURE);
     
     const subscription = sdk.streams.subscribe({
-      somniaStreamsEventId: null, // Using contract events, not Somnia Streams events
-      eventContractSource: rewardsContract,
-      topicOverrides: {
-        topic0: topic0,
-      },
+      somniaStreamsEventId: undefined, // Using contract events, not Somnia Streams events
+      eventContractSources: [rewardsContract],
+      topicOverrides: [topic0],
+      onlyPushChanges: false,
       ethCalls: [], // No additional calls needed
       onData: (data: any) => {
         try {
@@ -120,7 +119,7 @@ export function subscribeToScores(
     return () => {
       if (subscription) {
         subscription.then((sub) => {
-          if (sub && typeof sub.unsubscribe === 'function') {
+          if (sub && !(sub instanceof Error) && typeof sub.unsubscribe === 'function') {
             sub.unsubscribe();
           }
         }).catch(() => {
@@ -150,11 +149,10 @@ export function subscribeToPrizePool(
     const topic0 = getEventTopic(PRIZE_POOL_UPDATED_SIGNATURE);
     
     const subscription = sdk.streams.subscribe({
-      somniaStreamsEventId: null,
-      eventContractSource: rewardsContract,
-      topicOverrides: {
-        topic0: topic0,
-      },
+      somniaStreamsEventId: undefined,
+      eventContractSources: [rewardsContract],
+      topicOverrides: [topic0],
+      onlyPushChanges: false,
       ethCalls: [], // Could add call to get current prize pool
       onData: (data: any) => {
         try {
@@ -175,7 +173,9 @@ export function subscribeToPrizePool(
     });
 
     return () => {
-      subscription?.then((sub) => sub?.unsubscribe()).catch(console.error);
+      subscription?.then((sub) => {
+        if (sub && !(sub instanceof Error)) sub.unsubscribe();
+      }).catch(console.error);
     };
   } catch (error) {
     console.error('Error setting up prize pool subscription:', error);
@@ -199,11 +199,10 @@ export function subscribeToRewards(
     const topic0 = getEventTopic(REWARDS_DISTRIBUTED_SIGNATURE);
     
     const subscription = sdk.streams.subscribe({
-      somniaStreamsEventId: null,
-      eventContractSource: rewardsContract,
-      topicOverrides: {
-        topic0: topic0,
-      },
+      somniaStreamsEventId: undefined,
+      eventContractSources: [rewardsContract],
+      topicOverrides: [topic0],
+      onlyPushChanges: false,
       ethCalls: [],
       onData: (data: any) => {
         try {
@@ -229,7 +228,9 @@ export function subscribeToRewards(
     });
 
     return () => {
-      subscription?.then((sub) => sub?.unsubscribe()).catch(console.error);
+      subscription?.then((sub) => {
+        if (sub && !(sub instanceof Error)) sub.unsubscribe();
+      }).catch(console.error);
     };
   } catch (error) {
     console.error('Error setting up rewards subscription:', error);

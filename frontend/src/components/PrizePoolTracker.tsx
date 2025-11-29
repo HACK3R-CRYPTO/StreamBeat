@@ -23,7 +23,7 @@ const somniaTestnet = defineChain({
 const REWARDS_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_REWARDS_CONTRACT_ADDRESS || '0xC947EF14370F74ccE4d325ee4D83d9B4f3639da7';
 
 export function PrizePoolTracker() {
-  const [prizePool, setPrizePool] = useState<bigint>(0n);
+  const [prizePool, setPrizePool] = useState<bigint>(BigInt(0));
   const [isUpdating, setIsUpdating] = useState(false);
 
   // Initial fetch
